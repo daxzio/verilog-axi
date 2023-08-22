@@ -87,8 +87,9 @@ module axi_config_wr #
     input  wire                     s_axi_bready,
 
     output wire                     wr,
-    output wire [ADDR_WIDTH-1:0]              waddr,
-    output wire [DATA_WIDTH-1:0]              wdata
+    output wire [ADDR_WIDTH-1:0]    waddr,
+    output wire [DATA_WIDTH-1:0]    wdata,
+    output wire [STRB_WIDTH-1:0]    wstrb
 );
 
 parameter WORD_WIDTH = STRB_WIDTH;
@@ -116,7 +117,6 @@ reg [DATA_WIDTH-1:0] data_reg = {DATA_WIDTH{1'b0}}, data_next;
 reg [STRB_WIDTH-1:0] strb_reg = {STRB_WIDTH{1'b0}}, strb_next;
 reg [WUSER_WIDTH-1:0] wuser_reg = {WUSER_WIDTH{1'b0}}, wuser_next;
 reg [ADDR_WIDTH-1:0] waddr_reg = {ADDR_WIDTH{1'b0}}, waddr_next;
-//reg [DATA_WIDTH:0] wdata_reg = {DATA_WIDTH{1'b0}}, wdata_next;
 reg wr_reg = 1'b0, wr_next;
 
 reg s_axi_awready_reg = 1'b0, s_axi_awready_next;
@@ -135,9 +135,8 @@ assign s_axi_bvalid = s_axi_bvalid_reg;
 
 assign waddr = waddr_reg;
 assign wdata = data_reg;
+assign wstrb = strb_reg;
 assign wr = wr_reg;
-
-//integer i;
 
 always @* begin
     state_next = STATE_IDLE;
@@ -169,7 +168,7 @@ always @* begin
                 if (s_axi_awready && s_axi_awvalid) begin
                     s_axi_awready_next = 1'b0;
                     id_next = s_axi_awid;
-                    //s_axi_wready_next = m_axi_wready_int_early;
+                    strb_next = s_axi_wstrb;
                     state_next = STATE_DATA;
                 end else begin
                     state_next = STATE_IDLE;
@@ -177,7 +176,6 @@ always @* begin
             end
             STATE_DATA: begin
                 // data state; transfer write data
-                //s_axi_wready_next = m_axi_wready_int_early;
                 s_axi_wready_next = 1;
 
                 if (s_axi_wready && s_axi_wvalid) begin
@@ -200,22 +198,12 @@ always @* begin
             end
             STATE_RESP: begin
                 // resp state; transfer write response
-                //m_axi_bready_next = !s_axi_bvalid;
-
-//                 if (m_axi_bready && m_axi_bvalid) begin
-//                     m_axi_bready_next = 1'b0;
                     s_axi_bid_next = id_reg;
-                    //s_axi_bresp_next = m_axi_bresp;
                     s_axi_bresp_next = 0;
-                    //s_axi_buser_next = m_axi_buser;
                     s_axi_buser_next = 0;
                     s_axi_bvalid_next = 1'b1;
-                    //s_axi_awready_next = !m_axi_awvalid;
                     s_axi_awready_next = 1;
                     state_next = STATE_IDLE;
-//                 end else begin
-//                     state_next = STATE_RESP;
-//                 end
             end
         endcase
 end

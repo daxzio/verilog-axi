@@ -61,7 +61,8 @@ module axi_config #
     parameter RUSER_ENABLE = 0,
     // Width of ruser signal
     parameter RUSER_WIDTH = 1,
-    parameter SINGLE_ADDR = 0
+    parameter SINGLE_ADDR = 0,
+    parameter REG_DATA = 1
 )
 (
     input  wire                     clk,
@@ -122,7 +123,8 @@ module axi_config #
     input  wire                     rvalid,
     output wire                     wr,
     output wire [ADDR_WIDTH-1:0]    waddr,
-    output wire [DATA_WIDTH-1:0]    wdata
+    output wire [DATA_WIDTH-1:0]    wdata,
+    output wire [STRB_WIDTH-1:0]    wstrb
 );
     
     wire w_rd;
@@ -188,8 +190,10 @@ module axi_config #
                     $finish;
                 end
             end
-            assign waddr = w_wr ? w_waddr : w_raddr;
-            assign raddr = w_wr ? w_waddr : w_raddr;
+            //assign waddr = w_wr ? w_waddr : w_raddr;
+            //assign raddr = w_wr ? w_waddr : w_raddr;
+            assign waddr = w_waddr;
+            assign raddr = w_raddr;
         end
    endgenerate
 
@@ -209,6 +213,7 @@ module axi_config #
           .ADDR_WIDTH (ADDR_WIDTH)
           , .DATA_WIDTH (DATA_WIDTH)
           , .ID_WIDTH (ID_WIDTH)
+        , .REG_DATA(REG_DATA)
     ) i_axi_config_rd (
           .*
           ,.s_axi_arready (w_axi_arready)

@@ -86,8 +86,10 @@ module axi_config_rd #
 
 );
 
-parameter WORD_WIDTH = STRB_WIDTH;
-parameter WORD_SIZE = DATA_WIDTH/WORD_WIDTH;
+localparam G_INCR = DATA_WIDTH>>3;
+localparam G_FIFO_DEPTH = 4;
+localparam WORD_WIDTH = STRB_WIDTH;
+localparam WORD_SIZE = DATA_WIDTH/WORD_WIDTH;
 
 // bus width assertions
 initial begin
@@ -101,19 +103,34 @@ initial begin
     end
 end
 
-localparam [1:0]
-    STATE_IDLE = 2'd0,
-    STATE_DATA = 2'd1,
-    STATE_DATA_READ = 2'd2,
-    STATE_DATA_LAST = 2'd3;
+localparam [2:0]
+    STATE_IDLE = 3'd0,
+    STATE_DLY = 3'd1,
+    STATE_DATA = 3'd2,
+    STATE_DATA_READ = 3'd3,
+    STATE_DATA_LAST = 3'd4;
 
-reg [1:0] state_reg = STATE_IDLE, state_next;
+reg [2:0] state_reg = STATE_IDLE, state_next;
+
+
+
+reg [DATA_WIDTH-1:0] ydata_reg [G_FIFO_DEPTH];
+reg [DATA_WIDTH-1:0] ydata_next[G_FIFO_DEPTH] ;
+// reg [DATA_WIDTH-1:0] ydata_reg0;
+// reg [DATA_WIDTH-1:0] ydata_reg1;
+// reg [DATA_WIDTH-1:0] ydata_reg2;
+// reg [DATA_WIDTH-1:0] ydata_reg3;
+reg [$clog2(G_FIFO_DEPTH)-1:0] rindex_reg = 0, rindex_next;
+reg [$clog2(G_FIFO_DEPTH)-1:0] windex_reg = 0, windex_next;
 
 reg [ID_WIDTH-1:0] id_reg = {ID_WIDTH{1'b0}}, id_next;
 reg [ADDR_WIDTH-1:0] addr_reg = {ADDR_WIDTH{1'b0}}, addr_next;
+reg [DATA_WIDTH-1:0] xdata_reg = {DATA_WIDTH{1'b0}}, xdata_next;
 reg [DATA_WIDTH-1:0] data_reg = {DATA_WIDTH{1'b0}}, data_next;
+reg [DATA_WIDTH-1:0] data_skid_reg = {DATA_WIDTH{1'b0}}, data_skid_next;
 reg [RUSER_WIDTH-1:0] ruser_reg = {RUSER_WIDTH{1'b0}}, ruser_next;
 reg rd_reg = 1'b0, rd_next;
+//reg rd_dly;
 reg [7:0] len_reg = {8{1'b0}}, len_next;
 
 reg s_axi_arready_reg = 1'b0, s_axi_arready_next;
@@ -123,7 +140,7 @@ reg  [ID_WIDTH-1:0] s_axi_rid_reg = {ID_WIDTH{1'b0}}, s_axi_rid_next;
 
 assign s_axi_arready = s_axi_arready_reg;
 //assign s_axi_rdata = data_reg;
-assign s_axi_rdata = data_next;
+assign s_axi_rdata = ydata_reg[rindex_reg];
 //assign s_axi_rdata = REG_DATA ? data_reg : data_next;
 assign s_axi_rvalid = s_axi_rvalid_reg;
 assign s_axi_rlast = s_axi_rlast_reg;
@@ -142,14 +159,16 @@ always @* begin
     ruser_next = ruser_reg;
     len_next = len_reg;
     rd_next    = 0;
+    rindex_next = rindex_reg;
 
-    data_next = data_reg;
     s_axi_rvalid_next = s_axi_rvalid_reg;
     s_axi_rlast_next = s_axi_rlast_reg;
     s_axi_rid_next = s_axi_rid_reg;
+    
+    
+    
     case (state_reg)
         STATE_IDLE: begin
-            // idle state; wait for new burst
             s_axi_arready_next = 1;
             s_axi_rvalid_next = 0;
             s_axi_rlast_next = 0;
@@ -160,33 +179,48 @@ always @* begin
                 len_next = s_axi_arlen;
                 addr_next = s_axi_araddr;
                 rd_next    = 1;
-                state_next = STATE_DATA;
+                state_next = STATE_DLY;
             end else begin
                 state_next = STATE_IDLE;
             end
         end
+        
+        STATE_DLY: begin
+            state_next = STATE_DATA;
+            rd_next    = 1;
+            addr_next = addr_reg+G_INCR;
+            rindex_next = 0;
+        end
+        
         STATE_DATA: begin
-            // data state; transfer read data
             s_axi_rvalid_next = 1;
             s_axi_rid_next = id_reg;
-            rd_next    = 1;
+            addr_next = addr_reg+G_INCR;
+            if  (2 >= len_reg) begin
+                rd_next    = 0;
+            end else begin
+                rd_next    = 1;
+            end
             if  (0 == len_reg) begin
                 s_axi_rlast_next = 1;
-                rd_next    = 0;
                 state_next = STATE_DATA_LAST;
             end else begin
                 state_next = STATE_DATA_READ;
             end
-            data_next = rdata;
-            addr_next = addr_reg+4;
         end
+        
+        
         STATE_DATA_READ: begin
             state_next = STATE_DATA_READ;
             s_axi_rvalid_next = 1;
-            rd_next    = 1;
             if (s_axi_rready) begin
-                addr_next = addr_reg+4;
-                data_next = rdata;
+                rindex_next = (rindex_reg+1)%G_FIFO_DEPTH;
+                if  (2 >= len_reg) begin
+                    rd_next    = 0;
+                end else begin
+                    rd_next    = 1;
+                end
+                addr_next = addr_reg+G_INCR;
                 if (1 >= len_reg) begin
                     s_axi_rlast_next = 1;
                     state_next = STATE_DATA_LAST;
@@ -199,7 +233,6 @@ always @* begin
             s_axi_rlast_next = 1;
             s_axi_rvalid_next = 1;
             if (s_axi_rready) begin
-                data_next = rdata;
                 state_next = STATE_IDLE;
                 s_axi_rlast_next = 0;
                 s_axi_rvalid_next = 0;
@@ -208,6 +241,23 @@ always @* begin
             end
         end
     endcase
+end
+
+// assign ydata_reg0 = ydata_reg[0];
+// assign ydata_reg1 = ydata_reg[1];
+// assign ydata_reg2 = ydata_reg[2];
+// assign ydata_reg3 = ydata_reg[3];
+always @* begin
+    windex_next = windex_reg;
+    for (integer i = 0; i < G_FIFO_DEPTH; i = i + 1) begin
+        ydata_next[i] = ydata_reg[i];
+    end
+    if  (STATE_IDLE == state_reg) begin
+        windex_next = 0;
+    end else if (rvalid) begin
+        windex_next = (windex_reg+1)%G_FIFO_DEPTH;
+        ydata_next[windex_reg] = rdata;
+    end    
 end
 
 
@@ -219,7 +269,13 @@ always @(posedge clk) begin
     data_reg <= data_next;
     ruser_reg <= ruser_next;
     rd_reg    <= rd_next;
+    //rd_dly    <= rd_reg;
     len_reg <= len_next;
+    rindex_reg <= rindex_next;
+    windex_reg <= windex_next;
+    for (integer i = 0; i < G_FIFO_DEPTH; i = i + 1) begin
+        ydata_reg[i] <= ydata_next[i];
+    end
     s_axi_arready_reg <= s_axi_arready_next;        
     s_axi_rvalid_reg <= s_axi_rvalid_next;
     s_axi_rlast_reg <= s_axi_rlast_next;
