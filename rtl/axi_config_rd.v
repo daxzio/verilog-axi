@@ -114,12 +114,8 @@ reg [2:0] state_reg = STATE_IDLE, state_next;
 
 
 
-reg [DATA_WIDTH-1:0] ydata_reg [G_FIFO_DEPTH];
-reg [DATA_WIDTH-1:0] ydata_next[G_FIFO_DEPTH] ;
-// reg [DATA_WIDTH-1:0] ydata_reg0;
-// reg [DATA_WIDTH-1:0] ydata_reg1;
-// reg [DATA_WIDTH-1:0] ydata_reg2;
-// reg [DATA_WIDTH-1:0] ydata_reg3;
+reg [DATA_WIDTH-1:0] ydata_reg [G_FIFO_DEPTH-1:0];
+reg [DATA_WIDTH-1:0] ydata_next[G_FIFO_DEPTH-1:0] ;
 reg [$clog2(G_FIFO_DEPTH)-1:0] rindex_reg = 0, rindex_next;
 reg [$clog2(G_FIFO_DEPTH)-1:0] windex_reg = 0, windex_next;
 
@@ -130,7 +126,6 @@ reg [DATA_WIDTH-1:0] data_reg = {DATA_WIDTH{1'b0}}, data_next;
 reg [DATA_WIDTH-1:0] data_skid_reg = {DATA_WIDTH{1'b0}}, data_skid_next;
 reg [RUSER_WIDTH-1:0] ruser_reg = {RUSER_WIDTH{1'b0}}, ruser_next;
 reg rd_reg = 1'b0, rd_next;
-//reg rd_dly;
 reg [7:0] len_reg = {8{1'b0}}, len_next;
 
 reg s_axi_arready_reg = 1'b0, s_axi_arready_next;
@@ -139,9 +134,7 @@ reg  s_axi_rlast_reg = 1'b0, s_axi_rlast_next;
 reg  [ID_WIDTH-1:0] s_axi_rid_reg = {ID_WIDTH{1'b0}}, s_axi_rid_next;
 
 assign s_axi_arready = s_axi_arready_reg;
-//assign s_axi_rdata = data_reg;
 assign s_axi_rdata = ydata_reg[rindex_reg];
-//assign s_axi_rdata = REG_DATA ? data_reg : data_next;
 assign s_axi_rvalid = s_axi_rvalid_reg;
 assign s_axi_rlast = s_axi_rlast_reg;
 assign s_axi_rid = s_axi_rid_reg;
@@ -243,13 +236,14 @@ always @* begin
     endcase
 end
 
+integer i;
 // assign ydata_reg0 = ydata_reg[0];
 // assign ydata_reg1 = ydata_reg[1];
 // assign ydata_reg2 = ydata_reg[2];
 // assign ydata_reg3 = ydata_reg[3];
 always @* begin
     windex_next = windex_reg;
-    for (integer i = 0; i < G_FIFO_DEPTH; i = i + 1) begin
+    for (i = 0; i < G_FIFO_DEPTH; i = i + 1) begin
         ydata_next[i] = ydata_reg[i];
     end
     if  (STATE_IDLE == state_reg) begin
@@ -273,7 +267,7 @@ always @(posedge clk) begin
     len_reg <= len_next;
     rindex_reg <= rindex_next;
     windex_reg <= windex_next;
-    for (integer i = 0; i < G_FIFO_DEPTH; i = i + 1) begin
+    for (i = 0; i < G_FIFO_DEPTH; i = i + 1) begin
         ydata_reg[i] <= ydata_next[i];
     end
     s_axi_arready_reg <= s_axi_arready_next;        
