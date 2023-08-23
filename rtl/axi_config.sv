@@ -1,6 +1,6 @@
 /*
 
-Copyright (c) 2018 Alex Forencich
+Copyright (c) 2023 Dave Keeshan
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -22,9 +22,9 @@ THE SOFTWARE.
 
 */
 
-// Language: Verilog 2001
+// Language: SystemVerilog
 
-`resetall `timescale 1ns / 1ps `default_nettype none
+`resetall `timescale 1ns / 1ps
 
 /*
  * AXI4 config write
@@ -175,7 +175,7 @@ module axi_config #(
             end
             assign waddr = w_waddr;
 
-`ifdef SYNTHESIS
+`ifndef SYNTHESIS
             always @(posedge clk) begin
                 if (1 == w_rd && 1 == w_wr) begin
                     $error("Error: Read and Write are asserted at the same time");
