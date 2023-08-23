@@ -184,14 +184,13 @@ module axi_config #
                 end
             end
 
-            always @(posedge clk) begin
-                if (1 == w_rd && 1 == w_wr) begin
-                    $error("Error: Read and Write are asserted at the same time");
-                    $finish;
-                end
-            end
-            //assign waddr = w_wr ? w_waddr : w_raddr;
-            //assign raddr = w_wr ? w_waddr : w_raddr;
+//             always @(posedge clk) begin
+//                 if (1 == w_rd && 1 == w_wr) begin
+//                     $error("Error: Read and Write are asserted at the same time");
+//                     $finish;
+//                 end
+//             end
+
             assign waddr = w_waddr;
             assign raddr = w_raddr;
         end
