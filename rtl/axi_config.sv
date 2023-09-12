@@ -117,15 +117,15 @@ module axi_config #(
     , output [  STRB_WIDTH-1:0] wstrb
 );
 
-    logic w_rd;
-    logic w_wr;
+    logic                  w_rd;
+    logic                  w_wr;
     logic [ADDR_WIDTH-1:0] w_raddr;
     logic [ADDR_WIDTH-1:0] w_waddr;
 
-    logic w_axi_awvalid;
-    logic w_axi_arvalid;
-    logic w_axi_awready;
-    logic w_axi_arready;
+    logic                  w_axi_awvalid;
+    logic                  w_axi_arvalid;
+    logic                  w_axi_awready;
+    logic                  w_axi_arready;
 
     generate
         if (0 == SINGLE_ADDR) begin
@@ -195,8 +195,8 @@ module axi_config #(
         .*
         , .s_axi_awready(w_axi_awready)
         , .s_axi_awvalid(w_axi_awvalid)
-        , .wr(w_wr)
-        , .waddr(w_waddr)
+        , .wr           (w_wr)
+        , .waddr        (w_waddr)
     );
 
     axi_config_rd #(
@@ -208,8 +208,8 @@ module axi_config #(
         .*
         , .s_axi_arready(w_axi_arready)
         , .s_axi_arvalid(w_axi_arvalid)
-        , .rd(w_rd)
-        , .raddr(w_raddr)
+        , .rd           (w_rd)
+        , .raddr        (w_raddr)
     );
 
     assign wr = w_wr;
