@@ -31,35 +31,35 @@ THE SOFTWARE.
  */
 module axi_config #(
     // Width of address bus in bits
-    integer ADDR_WIDTH = 32
+      integer ADDR_WIDTH    = 32
     // Width of input (slave) interface data bus in bits
-    , integer DATA_WIDTH = 32
+    , integer DATA_WIDTH    = 32
     // Width of input (slave) interface wstrb (width of data bus in words)
-    , integer STRB_WIDTH = (DATA_WIDTH / 8)
+    , integer STRB_WIDTH    = (DATA_WIDTH / 8)
     // Width of ID signal
-    , integer ID_WIDTH = 8
+    , integer ID_WIDTH      = 8
     // Propagate awuser signal
     , integer AWUSER_ENABLE = 0
     // Width of awuser signal
-    , integer AWUSER_WIDTH = 1
+    , integer AWUSER_WIDTH  = 1
     // Propagate wuser signal
-    , integer WUSER_ENABLE = 0
+    , integer WUSER_ENABLE  = 0
     // Width of wuser signal
-    , integer WUSER_WIDTH = 1
+    , integer WUSER_WIDTH   = 1
     // Propagate buser signal
-    , integer BUSER_ENABLE = 0
+    , integer BUSER_ENABLE  = 0
     // Width of buser signal
-    , integer BUSER_WIDTH = 1
+    , integer BUSER_WIDTH   = 1
     // Propagate aruser signal
     , integer ARUSER_ENABLE = 0
     // Width of aruser signal
-    , integer ARUSER_WIDTH = 1
+    , integer ARUSER_WIDTH  = 1
     // Propagate ruser signal
-    , integer RUSER_ENABLE = 0
+    , integer RUSER_ENABLE  = 0
     // Width of ruser signal
-    , integer RUSER_WIDTH = 1
-    , integer SINGLE_ADDR = 0
-    , integer REG_DATA = 1
+    , integer RUSER_WIDTH   = 1
+    , integer SINGLE_ADDR   = 0
+    , integer REG_DATA      = 1
 ) (
       input                     clk
     , input                     rst

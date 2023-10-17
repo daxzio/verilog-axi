@@ -86,7 +86,8 @@ module axi_config_rd #
 
 );
 
-localparam G_INCR = DATA_WIDTH>>3;
+//localparam G_INCR = DATA_WIDTH>>3;
+localparam G_INCR = 4;
 localparam G_FIFO_DEPTH = 4;
 localparam WORD_WIDTH = STRB_WIDTH;
 localparam WORD_SIZE = DATA_WIDTH/WORD_WIDTH;
