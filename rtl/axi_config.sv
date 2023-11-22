@@ -127,8 +127,8 @@ module axi_config #(
     logic                  w_axi_awready;
     logic                  w_axi_arready;
 
-    generate
-        if (0 == SINGLE_ADDR) begin : g_split_addr
+    generate 
+        if (0 == SINGLE_ADDR) begin : g_separate_addr
             assign w_axi_awvalid = s_axi_awvalid;
             assign s_axi_awready = w_axi_awready;
             assign w_axi_arvalid = s_axi_arvalid;
@@ -147,7 +147,7 @@ module axi_config #(
             assign w_axi_arvalid = s_axi_arvalid & ~f_write_transaction & ~d_write_transaction;
             assign s_axi_arready = w_axi_arready & ~f_write_transaction & ~d_write_transaction;
 
-            always @* begin
+            always @* begin : p_comb
                 d_write_transaction = f_write_transaction;
                 d_read_transaction  = f_read_transaction;
                 if (1 == w_axi_awvalid && 1 == w_axi_awready && 0 == f_read_transaction) begin
@@ -164,7 +164,7 @@ module axi_config #(
                 end
             end
 
-            always @(posedge clk) begin
+            always @(posedge clk) begin : p_clk
                 if (rst) begin
                     f_write_transaction <= 0;
                     f_read_transaction  <= 0;
