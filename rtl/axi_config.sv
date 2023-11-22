@@ -128,14 +128,14 @@ module axi_config #(
     logic                  w_axi_arready;
 
     generate
-        if (0 == SINGLE_ADDR) begin
+        if (0 == SINGLE_ADDR) begin : g_split_addr
             assign w_axi_awvalid = s_axi_awvalid;
             assign s_axi_awready = w_axi_awready;
             assign w_axi_arvalid = s_axi_arvalid;
             assign s_axi_arready = w_axi_arready;
-            assign waddr = w_waddr;
-            assign raddr = w_raddr;
-        end else begin
+            assign waddr         = w_waddr;
+            assign raddr         = w_raddr;
+        end else begin : g_single_addr
 
             logic f_write_transaction;
             logic d_write_transaction;
@@ -174,6 +174,7 @@ module axi_config #(
                 end
             end
             assign waddr = w_waddr;
+            assign raddr = w_raddr;
 
 `ifndef SYNTHESIS
             always @(posedge clk) begin
@@ -183,7 +184,6 @@ module axi_config #(
                 end
             end
 `endif
-            assign raddr = w_raddr;
         end
     endgenerate
 
@@ -214,8 +214,7 @@ module axi_config #(
 
     assign wr = w_wr;
     assign rd = w_rd;
-    //assign waddr = w_waddr;
-    //assign raddr = w_raddr;
+
 
 endmodule
 
