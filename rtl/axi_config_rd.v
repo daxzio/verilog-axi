@@ -24,7 +24,7 @@ THE SOFTWARE.
 
 // Language: Verilog 2001
 
-`resetall `timescale 1ns / 1ps `default_nettype none
+//`resetall `timescale 1ns / 1ps `default_nettype none
 
 /*
  * AXI4 width adapter
@@ -142,7 +142,7 @@ module axi_config_rd #(
 
 
     always @* begin
-        state_next        = STATE_IDLE;
+        state_next        = state_reg;
 
         id_next           = id_reg;
         addr_next         = addr_reg;
@@ -151,6 +151,7 @@ module axi_config_rd #(
         rd_next           = 0;
         rindex_next       = rindex_reg;
 
+        s_axi_arready_next = s_axi_arready_reg;
         s_axi_rvalid_next = s_axi_rvalid_reg;
         s_axi_rlast_next  = s_axi_rlast_reg;
         s_axi_rid_next    = s_axi_rid_reg;
@@ -170,19 +171,15 @@ module axi_config_rd #(
                     addr_next          = s_axi_araddr;
                     rd_next            = 1;
                     state_next         = STATE_DLY;
-                end else begin
-                    state_next = STATE_IDLE;
                 end
             end
 
             STATE_DLY: begin
+                state_next = STATE_DATA;
                 if (0 != len_reg) begin
-                    state_next  = STATE_DATA;
                     rd_next     = 1;
                     addr_next   = addr_reg + G_INCR;
                     rindex_next = 0;
-                end else begin
-                    state_next = STATE_DATA;
                 end
             end
 
@@ -205,7 +202,6 @@ module axi_config_rd #(
 
 
             STATE_DATA_READ: begin
-                state_next        = STATE_DATA_READ;
                 s_axi_rvalid_next = 1;
                 if (s_axi_rready) begin
                     rindex_next = (rindex_reg + 1) % G_FIFO_DEPTH;
@@ -230,10 +226,9 @@ module axi_config_rd #(
                     state_next        = STATE_IDLE;
                     s_axi_rlast_next  = 0;
                     s_axi_rvalid_next = 0;
-                end else begin
-                    state_next = STATE_DATA_LAST;
                 end
             end
+            default: state_next = STATE_IDLE;
         endcase
     end
 

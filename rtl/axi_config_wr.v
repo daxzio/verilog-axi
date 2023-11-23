@@ -24,7 +24,7 @@ THE SOFTWARE.
 
 // Language: Verilog 2001
 
-`resetall `timescale 1ns / 1ps `default_nettype none
+//`resetall `timescale 1ns / 1ps `default_nettype none
 
 /*
  * AXI4 config write
@@ -130,7 +130,7 @@ module axi_config_wr #(
     assign wstrb         = strb_reg;
     assign wr            = wr_reg;
 
-    always @* begin
+    always @(*) begin
         state_next         = STATE_IDLE;
 
         id_next            = id_reg;
@@ -146,8 +146,8 @@ module axi_config_wr #(
         s_axi_buser_next   = s_axi_buser_reg;
         s_axi_bvalid_next  = s_axi_bvalid_reg && !s_axi_bready;
 
-        waddr_next <= waddr_reg;
-        wr_next    <= 0;
+        waddr_next = waddr_reg;
+        wr_next    = 0;
 
 
         case (state_reg)
@@ -156,7 +156,7 @@ module axi_config_wr #(
                 //s_axi_awready_next = !m_axi_awvalid;
                 s_axi_awready_next = 1;
 
-                addr_next <= s_axi_awaddr;
+                addr_next = s_axi_awaddr;
                 if (s_axi_awready && s_axi_awvalid) begin
                     s_axi_awready_next = 1'b0;
                     id_next            = s_axi_awid;
@@ -170,13 +170,13 @@ module axi_config_wr #(
                 // data state; transfer write data
                 s_axi_wready_next = 1;
 
+//                 if (s_axi_wready && s_axi_wvalid) begin
+//                 end
                 if (s_axi_wready && s_axi_wvalid) begin
-                end
-                if (s_axi_wready && s_axi_wvalid) begin
-                    addr_next  <= addr_reg + 4;
-                    waddr_next <= addr_reg;
-                    wr_next    <= 1;
-                    data_next  <= s_axi_wdata;
+                    addr_next  = addr_reg + 4;
+                    waddr_next = addr_reg;
+                    wr_next    = 1;
+                    data_next  = s_axi_wdata;
                     if (s_axi_wlast) begin
                         // last data word, wait for response
                         s_axi_wready_next = 1'b0;
@@ -197,6 +197,7 @@ module axi_config_wr #(
                 s_axi_awready_next = 1;
                 state_next         = STATE_IDLE;
             end
+            default: state_next    = STATE_IDLE;
         endcase
     end
 
