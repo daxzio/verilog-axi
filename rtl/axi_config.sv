@@ -127,7 +127,7 @@ module axi_config #(
     logic                  w_axi_awready;
     logic                  w_axi_arready;
 
-    generate 
+    generate
         if (0 == SINGLE_ADDR) begin : g_separate_addr
             assign w_axi_awvalid = s_axi_awvalid;
             assign s_axi_awready = w_axi_awready;
