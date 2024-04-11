@@ -79,6 +79,7 @@ module axi_config_rd #(
 
     output wire                  rd,
     output wire [ADDR_WIDTH-1:0] raddr,
+    output wire [ADDR_WIDTH-1:0] raddr_next,
     input  wire [DATA_WIDTH-1:0] rdata,
     input  wire                  rvalid
 
@@ -139,6 +140,7 @@ module axi_config_rd #(
     assign s_axi_rid     = s_axi_rid_reg;
     assign s_axi_rresp   = 0;
     assign s_axi_ruser   = ruser_reg;
+    assign raddr_next    = addr_next;
     assign raddr         = addr_reg;
     assign rd            = rd_reg;
 

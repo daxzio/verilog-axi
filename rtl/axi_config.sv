@@ -108,6 +108,7 @@ module axi_config #(
     , output                    s_axi_rvalid
     , input                     s_axi_rready
     , output [  ADDR_WIDTH-1:0] raddr
+    , output [  ADDR_WIDTH-1:0] raddr_next
     , output                    rd
     , input  [  DATA_WIDTH-1:0] rdata
     , input                     rvalid
@@ -120,6 +121,7 @@ module axi_config #(
     logic                  w_rd;
     logic                  w_wr;
     logic [ADDR_WIDTH-1:0] w_raddr;
+    logic [ADDR_WIDTH-1:0] w_raddr_next;
     logic [ADDR_WIDTH-1:0] w_waddr;
 
     logic                  w_axi_awvalid;
@@ -127,6 +129,7 @@ module axi_config #(
     logic                  w_axi_awready;
     logic                  w_axi_arready;
 
+    assign raddr_next         = w_raddr_next;
     generate
         if (0 == SINGLE_ADDR) begin : g_separate_addr
             assign w_axi_awvalid = s_axi_awvalid;
@@ -210,6 +213,7 @@ module axi_config #(
         , .s_axi_arvalid(w_axi_arvalid)
         , .rd           (w_rd)
         , .raddr        (w_raddr)
+        , .raddr_next   (w_raddr_next)
     );
 
     assign wr = w_wr;
