@@ -131,6 +131,9 @@ parameter SEGMENT_COUNT = EXPAND ? (M_STRB_WIDTH / S_STRB_WIDTH) : (S_STRB_WIDTH
 // data width and keep width per segment
 parameter SEGMENT_DATA_WIDTH = DATA_WIDTH / SEGMENT_COUNT;
 parameter SEGMENT_STRB_WIDTH = STRB_WIDTH / SEGMENT_COUNT;
+// set out upper and lower limits
+parameter INDEX_UPPER = (EXPAND) ? M_ADDR_BIT_OFFSET : S_ADDR_BIT_OFFSET;
+parameter INDEX_LOWER = (EXPAND) ? S_ADDR_BIT_OFFSET : M_ADDR_BIT_OFFSET;
 
 // bus width assertions
 initial begin
@@ -336,7 +339,7 @@ always @* begin
                         if (CONVERT_NARROW_BURST) begin
                             m_axi_arlen_next = (({{S_ADDR_BIT_OFFSET+1{1'b0}}, s_axi_arlen} << s_axi_arsize) + s_axi_araddr[M_ADDR_BIT_OFFSET-1:0]) >> M_BURST_SIZE;
                         end else begin
-                            m_axi_arlen_next = ({1'b0, s_axi_arlen} + s_axi_araddr[M_ADDR_BIT_OFFSET-1:S_ADDR_BIT_OFFSET]) >> $clog2(SEGMENT_COUNT);
+                            m_axi_arlen_next = ({1'b0, s_axi_arlen} + s_axi_araddr[INDEX_UPPER-1:INDEX_LOWER]) >> $clog2(SEGMENT_COUNT);
                         end
                         m_axi_arsize_next = M_BURST_SIZE;
                         state_next = STATE_DATA_READ;
@@ -365,7 +368,7 @@ always @* begin
 
                 if (m_axi_rready && m_axi_rvalid) begin
                     s_axi_rid_int = id_reg;
-                    s_axi_rdata_int = m_axi_rdata >> (addr_reg[M_ADDR_BIT_OFFSET-1:S_ADDR_BIT_OFFSET] * S_DATA_WIDTH);
+                    s_axi_rdata_int = m_axi_rdata >> (addr_reg[INDEX_UPPER-1:INDEX_LOWER] * S_DATA_WIDTH);
                     s_axi_rresp_int = m_axi_rresp;
                     s_axi_rlast_int = m_axi_rlast;
                     s_axi_ruser_int = m_axi_ruser;
@@ -390,7 +393,7 @@ always @* begin
                     data_next = m_axi_rdata;
                     resp_next = m_axi_rresp;
                     ruser_next = m_axi_ruser;
-                    s_axi_rdata_int = m_axi_rdata >> (addr_reg[M_ADDR_BIT_OFFSET-1:S_ADDR_BIT_OFFSET] * S_DATA_WIDTH);
+                    s_axi_rdata_int = m_axi_rdata >> (addr_reg[INDEX_UPPER-1:INDEX_LOWER] * S_DATA_WIDTH);
                     s_axi_rresp_int = m_axi_rresp;
                     s_axi_rlast_int = 1'b0;
                     s_axi_ruser_int = m_axi_ruser;
@@ -417,7 +420,7 @@ always @* begin
 
                 if (s_axi_rready_int_reg) begin
                     s_axi_rid_int = id_reg;
-                    s_axi_rdata_int = data_reg >> (addr_reg[M_ADDR_BIT_OFFSET-1:S_ADDR_BIT_OFFSET] * S_DATA_WIDTH);
+                    s_axi_rdata_int = data_reg >> (addr_reg[INDEX_UPPER-1:INDEX_LOWER] * S_DATA_WIDTH);
                     s_axi_rresp_int = resp_reg;
                     s_axi_rlast_int = 1'b0;
                     s_axi_ruser_int = ruser_reg;
@@ -499,7 +502,7 @@ always @* begin
                 m_axi_rready_next = s_axi_rready_int_early && !m_axi_arvalid;
 
                 if (m_axi_rready && m_axi_rvalid) begin
-                    data_next[addr_reg[S_ADDR_BIT_OFFSET-1:M_ADDR_BIT_OFFSET]*SEGMENT_DATA_WIDTH +: SEGMENT_DATA_WIDTH] = m_axi_rdata;
+                    data_next[addr_reg[INDEX_UPPER-1:INDEX_LOWER]*SEGMENT_DATA_WIDTH +: SEGMENT_DATA_WIDTH] = m_axi_rdata;
                     if (m_axi_rresp) begin
                         resp_next = m_axi_rresp;
                     end

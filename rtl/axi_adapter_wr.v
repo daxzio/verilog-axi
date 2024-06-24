@@ -144,6 +144,9 @@ parameter SEGMENT_COUNT = EXPAND ? (M_STRB_WIDTH / S_STRB_WIDTH) : (S_STRB_WIDTH
 parameter SEGMENT_DATA_WIDTH = DATA_WIDTH / SEGMENT_COUNT;
 parameter SEGMENT_STRB_WIDTH = STRB_WIDTH / SEGMENT_COUNT;
 
+parameter INDEX_UPPER = (EXPAND) ? M_ADDR_BIT_OFFSET : S_ADDR_BIT_OFFSET;
+parameter INDEX_LOWER = (EXPAND) ? S_ADDR_BIT_OFFSET : M_ADDR_BIT_OFFSET;
+
 // bus width assertions
 initial begin
     if (S_WORD_SIZE * S_STRB_WIDTH != S_DATA_WIDTH) begin
@@ -548,8 +551,8 @@ always @* begin
                     data_next = s_axi_wdata;
                     strb_next = s_axi_wstrb;
                     wuser_next = s_axi_wuser;
-                    m_axi_wdata_int = s_axi_wdata >> (addr_reg[S_ADDR_BIT_OFFSET-1:M_ADDR_BIT_OFFSET] * M_DATA_WIDTH);
-                    m_axi_wstrb_int = s_axi_wstrb >> (addr_reg[S_ADDR_BIT_OFFSET-1:M_ADDR_BIT_OFFSET] * M_STRB_WIDTH);
+                    m_axi_wdata_int = s_axi_wdata >> (addr_reg[INDEX_UPPER-1:INDEX_LOWER] * M_DATA_WIDTH);
+                    m_axi_wstrb_int = s_axi_wstrb >> (addr_reg[INDEX_UPPER-1:INDEX_LOWER] * M_STRB_WIDTH);
                     m_axi_wlast_int = 1'b0;
                     m_axi_wuser_int = s_axi_wuser;
                     m_axi_wvalid_int = 1'b1;
@@ -576,8 +579,8 @@ always @* begin
                 s_axi_wready_next = 1'b0;
 
                 if (m_axi_wready_int_reg) begin
-                    m_axi_wdata_int = data_reg >> (addr_reg[S_ADDR_BIT_OFFSET-1:M_ADDR_BIT_OFFSET] * M_DATA_WIDTH);
-                    m_axi_wstrb_int = strb_reg >> (addr_reg[S_ADDR_BIT_OFFSET-1:M_ADDR_BIT_OFFSET] * M_STRB_WIDTH);
+                    m_axi_wdata_int = data_reg >> (addr_reg[INDEX_UPPER-1:INDEX_LOWER] * M_DATA_WIDTH);
+                    m_axi_wstrb_int = strb_reg >> (addr_reg[INDEX_UPPER-1:INDEX_LOWER] * M_STRB_WIDTH);
                     m_axi_wlast_int = 1'b0;
                     m_axi_wuser_int = wuser_reg;
                     m_axi_wvalid_int = 1'b1;
