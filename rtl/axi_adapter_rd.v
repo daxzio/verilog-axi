@@ -132,8 +132,8 @@ parameter SEGMENT_COUNT = EXPAND ? (M_STRB_WIDTH / S_STRB_WIDTH) : (S_STRB_WIDTH
 parameter SEGMENT_DATA_WIDTH = DATA_WIDTH / SEGMENT_COUNT;
 parameter SEGMENT_STRB_WIDTH = STRB_WIDTH / SEGMENT_COUNT;
 // set out upper and lower limits
-parameter INDEX_UPPER = (EXPAND) ? M_ADDR_BIT_OFFSET : S_ADDR_BIT_OFFSET;
-parameter INDEX_LOWER = (EXPAND) ? S_ADDR_BIT_OFFSET : M_ADDR_BIT_OFFSET;
+parameter INDEX_UPPER = (SEGMENT_COUNT== 1) ? 1 : (EXPAND) ? M_ADDR_BIT_OFFSET : S_ADDR_BIT_OFFSET;
+parameter INDEX_LOWER = (SEGMENT_COUNT== 1) ? 0 : (EXPAND) ? S_ADDR_BIT_OFFSET : M_ADDR_BIT_OFFSET;
 
 // bus width assertions
 initial begin
@@ -308,6 +308,9 @@ always @* begin
                 end else begin
                     state_next = STATE_DATA;
                 end
+            end
+            default: begin
+                state_next = STATE_IDLE;
             end
         endcase
     end else if (EXPAND) begin

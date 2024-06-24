@@ -143,9 +143,9 @@ parameter SEGMENT_COUNT = EXPAND ? (M_STRB_WIDTH / S_STRB_WIDTH) : (S_STRB_WIDTH
 // data width and keep width per segment
 parameter SEGMENT_DATA_WIDTH = DATA_WIDTH / SEGMENT_COUNT;
 parameter SEGMENT_STRB_WIDTH = STRB_WIDTH / SEGMENT_COUNT;
-
-parameter INDEX_UPPER = (EXPAND) ? M_ADDR_BIT_OFFSET : S_ADDR_BIT_OFFSET;
-parameter INDEX_LOWER = (EXPAND) ? S_ADDR_BIT_OFFSET : M_ADDR_BIT_OFFSET;
+// set out upper and lower limits
+parameter INDEX_UPPER = (SEGMENT_COUNT== 1) ? 1 : (EXPAND) ? M_ADDR_BIT_OFFSET : S_ADDR_BIT_OFFSET;
+parameter INDEX_LOWER = (SEGMENT_COUNT== 1) ? 0 : (EXPAND) ? S_ADDR_BIT_OFFSET : M_ADDR_BIT_OFFSET;
 
 // bus width assertions
 initial begin
@@ -355,6 +355,9 @@ always @* begin
                     state_next = STATE_RESP;
                 end
             end
+            default: begin
+                state_next = STATE_IDLE;
+            end
         endcase
     end else if (EXPAND) begin
         // master output is wider; merge writes
@@ -387,7 +390,7 @@ always @* begin
                         if (CONVERT_NARROW_BURST) begin
                             m_axi_awlen_next = (({{S_ADDR_BIT_OFFSET+1{1'b0}}, s_axi_awlen} << s_axi_awsize) + s_axi_awaddr[M_ADDR_BIT_OFFSET-1:0]) >> M_BURST_SIZE;
                         end else begin
-                            m_axi_awlen_next = ({1'b0, s_axi_awlen} + s_axi_awaddr[M_ADDR_BIT_OFFSET-1:S_ADDR_BIT_OFFSET]) >> $clog2(SEGMENT_COUNT);
+                            m_axi_awlen_next = ({1'b0, s_axi_awlen} + s_axi_awaddr[INDEX_UPPER-1:INDEX_LOWER]) >> $clog2(SEGMENT_COUNT);
                         end
                         m_axi_awsize_next = M_BURST_SIZE;
                         state_next = STATE_DATA_2;
@@ -417,7 +420,7 @@ always @* begin
 
                 if (s_axi_wready && s_axi_wvalid) begin
                     m_axi_wdata_int = {(M_WORD_WIDTH/S_WORD_WIDTH){s_axi_wdata}};
-                    m_axi_wstrb_int = s_axi_wstrb << (addr_reg[M_ADDR_BIT_OFFSET-1:S_ADDR_BIT_OFFSET] * S_STRB_WIDTH);
+                    m_axi_wstrb_int = s_axi_wstrb << (addr_reg[INDEX_UPPER-1:INDEX_LOWER] * S_STRB_WIDTH);
                     m_axi_wlast_int = s_axi_wlast;
                     m_axi_wuser_int = s_axi_wuser;
                     m_axi_wvalid_int = 1'b1;
@@ -440,13 +443,13 @@ always @* begin
                     if (CONVERT_NARROW_BURST) begin
                         for (i = 0; i < S_WORD_WIDTH; i = i + 1) begin
                             if (s_axi_wstrb[i]) begin
-                                data_next[addr_reg[M_ADDR_BIT_OFFSET-1:S_ADDR_BIT_OFFSET]*SEGMENT_DATA_WIDTH+i*M_WORD_SIZE +: M_WORD_SIZE] = s_axi_wdata[i*M_WORD_SIZE +: M_WORD_SIZE];
-                                strb_next[addr_reg[M_ADDR_BIT_OFFSET-1:S_ADDR_BIT_OFFSET]*SEGMENT_STRB_WIDTH+i] = 1'b1;
+                                data_next[addr_reg[INDEX_UPPER-1:INDEX_LOWER]*SEGMENT_DATA_WIDTH+i*M_WORD_SIZE +: M_WORD_SIZE] = s_axi_wdata[i*M_WORD_SIZE +: M_WORD_SIZE];
+                                strb_next[addr_reg[INDEX_UPPER-1:INDEX_LOWER]*SEGMENT_STRB_WIDTH+i] = 1'b1;
                             end
                         end
                     end else begin
-                        data_next[addr_reg[M_ADDR_BIT_OFFSET-1:S_ADDR_BIT_OFFSET]*SEGMENT_DATA_WIDTH +: SEGMENT_DATA_WIDTH] = s_axi_wdata;
-                        strb_next[addr_reg[M_ADDR_BIT_OFFSET-1:S_ADDR_BIT_OFFSET]*SEGMENT_STRB_WIDTH +: SEGMENT_STRB_WIDTH] = s_axi_wstrb;
+                        data_next[addr_reg[INDEX_UPPER-1:INDEX_LOWER]*SEGMENT_DATA_WIDTH +: SEGMENT_DATA_WIDTH] = s_axi_wdata;
+                        strb_next[addr_reg[INDEX_UPPER-1:INDEX_LOWER]*SEGMENT_STRB_WIDTH +: SEGMENT_STRB_WIDTH] = s_axi_wstrb;
                     end
                     m_axi_wdata_int = data_next;
                     m_axi_wstrb_int = strb_next;
